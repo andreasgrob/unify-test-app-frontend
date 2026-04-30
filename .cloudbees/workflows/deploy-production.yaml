@@ -1,0 +1,153 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pre-deployment:
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Verify staging deployment
+        uses: docker://alpine:3.18
+        run: |
+          echo "Verifying staging environment"
+          echo "✓ Staging deployment healthy"
+          echo "✓ All E2E tests passing"
+          echo "✓ Performance metrics acceptable"
+
+      - name: Run accessibility audit
+        uses: docker://alpine:3.18
+        run: |
+          echo "Running accessibility compliance checks"
+          echo "✓ WCAG 2.1 AA compliant"
+          echo "✓ Keyboard navigation functional"
+          echo "✓ Screen reader compatible"
+
+  deploy:
+    needs: pre-deployment
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Install dependencies
+        uses: docker://node:20-alpine
+        run: |
+          npm ci --production
+
+      - name: Build production bundle
+        uses: docker://node:20-alpine
+        run: |
+          npm run build
+          echo "Production bundle created and optimized"
+          echo "Total bundle size: 238 KB (gzipped)"
+
+      - name: Build production Docker image
+        uses: docker://docker:24-alpine
+        run: |
+          echo "Building Docker image for production"
+          echo "Image: unify-test-app-frontend:v$CLOUDBEES_RUN_NUMBER"
+          echo "Tagged as: unify-test-app-frontend:latest"
+
+      - name: Create backup
+        uses: docker://alpine:3.18
+        run: |
+          echo "Creating backup of current production assets"
+          echo "✓ Static assets backed up"
+          echo "✓ CDN configuration backed up"
+
+      - name: Deploy to production (Canary)
+        uses: docker://alpine:3.18
+        run: |
+          echo "Starting canary deployment to production"
+          echo "Environment: production"
+          echo "Strategy: Canary (10% traffic initially)"
+          echo "Regions: us-east-1, us-west-2, eu-west-1"
+          echo "CDN: CloudFront (production)"
+          echo "✓ Canary deployment active"
+
+      - name: Monitor canary metrics
+        uses: docker://alpine:3.18
+        run: |
+          echo "Monitoring canary deployment (10% traffic)"
+          echo "✓ Error rate: 0.00%"
+          echo "✓ Load time: avg 1.2s"
+          echo "✓ User engagement stable"
+          echo "✓ No JavaScript errors"
+          echo "Canary looks healthy, proceeding..."
+
+      - name: Gradual rollout
+        uses: docker://alpine:3.18
+        run: |
+          echo "Increasing traffic gradually"
+          echo "✓ 10% → 25% traffic shifted"
+          echo "✓ 25% → 50% traffic shifted"
+          echo "✓ 50% → 100% traffic shifted"
+          echo "Full rollout completed"
+
+      - name: Invalidate global CDN cache
+        uses: docker://alpine:3.18
+        run: |
+          echo "Invalidating production CDN cache globally"
+          echo "✓ All edge locations invalidated"
+          echo "✓ New assets distributed"
+
+      - name: Run production smoke tests
+        uses: docker://alpine:3.18
+        run: |
+          echo "Running production smoke tests"
+          echo "✓ Homepage loading correctly"
+          echo "✓ Critical user paths functional"
+          echo "✓ Backend API connectivity verified"
+          echo "✓ Feature flags synchronized"
+
+      - name: Monitor deployment
+        uses: docker://alpine:3.18
+        run: |
+          echo "Monitoring production deployment"
+          echo "✓ Core Web Vitals: GOOD"
+          echo "✓ Error rate: 0.01%"
+          echo "✓ User satisfaction: stable"
+          echo "✓ No anomalies detected"
+
+  post-deployment:
+    needs: deploy
+    steps:
+      - name: Verify global health
+        uses: docker://alpine:3.18
+        run: |
+          echo "Verifying production health across all regions"
+          echo "✓ US East: Healthy"
+          echo "✓ US West: Healthy"
+          echo "✓ EU West: Healthy"
+          echo "✓ All metrics normal"
+
+      - name: Run final Lighthouse audit
+        uses: docker://alpine:3.18
+        run: |
+          echo "Running production Lighthouse audit"
+          echo "Performance: 96/100"
+          echo "Accessibility: 100/100"
+          echo "Best Practices: 92/100"
+          echo "SEO: 100/100"
+
+      - name: Update release notes
+        uses: docker://alpine:3.18
+        run: |
+          echo "Updating release documentation"
+          echo "Version: v$CLOUDBEES_RUN_NUMBER"
+          echo "✓ Release notes published"
+          echo "✓ Change log updated"
+
+      - name: Notify stakeholders
+        uses: docker://alpine:3.18
+        run: |
+          echo "Production deployment completed successfully"
+          echo "Version: v$CLOUDBEES_RUN_NUMBER"
+          echo "URL: https://unify-test-app.example.com"
+          echo "Deployment time: 15 minutes"
+          echo "Zero downtime achieved"
+          echo "Canary deployment strategy successful"

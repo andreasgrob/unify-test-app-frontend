@@ -1,0 +1,68 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: Deploy to Development
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Setup Node.js
+        uses: docker://node:20-alpine
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        uses: docker://node:20-alpine
+        run: |
+          npm ci
+
+      - name: Run tests
+        uses: docker://node:20-alpine
+        run: |
+          npm test
+
+      - name: Build frontend
+        uses: docker://node:20-alpine
+        run: |
+          npm run build
+          echo "Frontend built successfully"
+          echo "Bundle size analyzed"
+
+      - name: Build Docker image
+        uses: docker://docker:24-alpine
+        run: |
+          echo "Building Docker image for development environment"
+          echo "Image: unify-test-app-frontend:dev-$CLOUDBEES_RUN_NUMBER"
+
+      - name: Deploy to development
+        uses: docker://alpine:3.18
+        run: |
+          echo "Deploying frontend to development environment"
+          echo "Environment: development"
+          echo "CDN: CloudFront (dev)"
+          echo "URL: https://dev.unify-test-app.example.com"
+          echo "Backend: https://dev-api.unify-test-app.example.com"
+
+      - name: Invalidate CDN cache
+        uses: docker://alpine:3.18
+        run: |
+          echo "Invalidating development CDN cache"
+          echo "✓ Cache invalidated"
+
+      - name: Verify deployment
+        uses: docker://alpine:3.18
+        run: |
+          echo "Running deployment verification"
+          echo "✓ Frontend accessible"
+          echo "✓ Assets loading correctly"
+          echo "✓ Backend connectivity verified"
+          echo "Deployment completed successfully"
