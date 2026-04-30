@@ -1,9 +1,12 @@
 apiVersion: automation.cloudbees.io/v1alpha1
 kind: workflow
-name: Build and Test
+name: Frontend Build and Test
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -12,34 +15,47 @@ jobs:
     steps:
       - name: Checkout code
         uses: cloudbees-io/checkout@v1
-      
+
+      - name: Setup Node.js
+        uses: docker://node:20-alpine
+        run: |
+          node --version
+          npm --version
+
+      - name: Install dependencies
+        uses: docker://node:20-alpine
+        run: |
+          npm ci
+
       - name: Build application
-        uses: docker://alpine:3.18
+        uses: docker://node:20-alpine
         run: |
-          echo "Building the frontend application..."
-      
-      - name: Package artifacts
-        uses: docker://alpine:3.18
-        run: |
-          echo "Packaging build artifacts..."
-  
+          npm run build
+          echo "Frontend built successfully"
+
   test:
     needs: build
     steps:
       - name: Checkout code
         uses: cloudbees-io/checkout@v1
-      
+
+      - name: Install dependencies
+        uses: docker://node:20-alpine
+        run: |
+          npm ci
+
       - name: Run unit tests
-        uses: docker://alpine:3.18
+        uses: docker://node:20-alpine
         run: |
-          echo "Running unit tests..."
-      
-      - name: Run integration tests
-        uses: docker://alpine:3.18
+          npm test
+
+  docker:
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+
+      - name: Build Docker image
+        uses: docker://docker:24-alpine
         run: |
-          echo "Running integration tests..."
-      
-      - name: Generate test report
-        uses: docker://alpine:3.18
-        run: |
-          echo "Generating test coverage report..."
+          echo "Docker image build would happen here"
