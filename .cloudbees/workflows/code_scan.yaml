@@ -1,0 +1,45 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+      
+      - name: Build application
+        uses: docker://alpine:3.18
+        run: |
+          echo "Building the frontend application..."
+      
+      - name: Package artifacts
+        uses: docker://alpine:3.18
+        run: |
+          echo "Packaging build artifacts..."
+  
+  test:
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: cloudbees-io/checkout@v1
+      
+      - name: Run unit tests
+        uses: docker://alpine:3.18
+        run: |
+          echo "Running unit tests..."
+      
+      - name: Run integration tests
+        uses: docker://alpine:3.18
+        run: |
+          echo "Running integration tests..."
+      
+      - name: Generate test report
+        uses: docker://alpine:3.18
+        run: |
+          echo "Generating test coverage report..."
